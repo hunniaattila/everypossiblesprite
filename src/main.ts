@@ -38,13 +38,34 @@ const renderGrid = () => {
       const screenX = col * totalSize;
       const screenY = row * totalSize;
 
+      const adjustedX = screenX + padding / 2;
+      const adjustedY = screenY + padding / 2;
+
       const localOffset = BigInt(row * totalCols + col);
       const cellID = currentGlobalIndex + localOffset;
 
-      const spriteColors = extractColorsFromId(cellID);
-      drawSprite(ctx, screenX, screenY, spriteColors);
+      const scrambledID = scrambleId(cellID);
+
+      const spriteColors = extractColorsFromId(scrambledID);
+      drawSprite(ctx, adjustedX, adjustedY, spriteColors);
     }
   }
+};
+
+const scrambleId = (cellID: bigint): bigint => {
+  const bitMask = (1n << 64n) - 1n;
+  let left = cellID >> 64n;
+  let right = cellID & bitMask;
+
+  for (let i = 0; i < 3; i++) {
+    const pseudoRandomValue = (right | 0x0fa1afe11c001b01n) * BigInt(i + 1);
+
+    const tempLeft = left;
+    left = right;
+    right = tempLeft | (pseudoRandomValue & bitMask);
+  }
+
+  return (left << 64n) | right;
 };
 
 const handleMouseWheel = (e: WheelEvent) => {
@@ -105,8 +126,8 @@ const drawSprite = (
     const spriteCol = i % 8;
     const spriteRow = Math.floor(i / 8);
 
-    const pixelX = startX + spriteCol * pixelSize + padding / 2;
-    const pixelY = startY + spriteRow * pixelSize + padding / 2;
+    const pixelX = startX + spriteCol * pixelSize;
+    const pixelY = startY + spriteRow * pixelSize;
 
     ctx.fillStyle = colorsArray[i];
 
