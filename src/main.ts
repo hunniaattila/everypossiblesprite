@@ -20,14 +20,13 @@ const syncCanvasResolution = () => {
   ctx.scale(scaleFactor, scaleFactor);
   ctx.imageSmoothingEnabled = false;
 
-  //TODO: tigger redrawing grid here
   renderGrid();
 };
 
 const renderGrid = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.font = "14px monospace";
+  ctx.font = "8px monospace";
   ctx.textAlign = "center";
   ctx.fillStyle = "white";
 
@@ -42,7 +41,7 @@ const renderGrid = () => {
       const localOffset = BigInt(row * totalCols + col);
       const cellID = currentGlobalIndex + localOffset;
 
-      const textToDisplay = cellID.toString();
+      const textToDisplay = (cellID + 1n).toString();
 
       ctx.rect(screenX, screenY, spriteSize, spriteSize);
       ctx.fillText(
@@ -54,9 +53,25 @@ const renderGrid = () => {
   }
 };
 
-const handleMouseWheel = () => { };
+const handleMouseWheel = (e: WheelEvent) => {
+  e.preventDefault();
+
+  const colsOnScreen = Math.ceil(canvas.clientWidth / spriteSize);
+
+  if (e.deltaY > 0) {
+    currentGlobalIndex += BigInt(colsOnScreen);
+  } else if (e.deltaY < 0) {
+    currentGlobalIndex -= BigInt(colsOnScreen);
+  }
+
+  if (currentGlobalIndex < 0n) {
+    currentGlobalIndex = 0n;
+  }
+
+  renderGrid();
+};
 
 window.addEventListener("resize", syncCanvasResolution);
-window.addEventListener("wheel", handleMouseWheel());
+window.addEventListener("wheel", handleMouseWheel, { passive: false });
 
 syncCanvasResolution();
